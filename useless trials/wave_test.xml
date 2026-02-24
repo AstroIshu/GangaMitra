@@ -1,0 +1,14 @@
+
+<mujoco>
+  <asset>
+    <hfield name="wave_hfield" nrow="32" ncol="32" size="16 16 2 0.1"/>
+  </asset>
+  <worldbody>
+    <light pos="0 0 10" directional="true"/>
+    <geom type="hfield" hfield="wave_hfield" rgba="0.3 0.6 0.3 1"/>
+    <!-- Add a floating sphere to show scale -->
+    <body pos="8 8 2">
+      <geom type="sphere" size="0.3" rgba="1 0 0 1"/>
+    </body>
+  </worldbody>
+</mujoco>

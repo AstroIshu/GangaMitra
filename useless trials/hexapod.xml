@@ -1,0 +1,27 @@
+<mujoco model="riverbed">
+  <compiler angle="radian" autolimits="true"/>
+  
+  <option timestep="0.01" gravity="0 0 -9.81"/>
+  
+  <asset>
+    <!-- Heightfield: 64x64 grid, 32x32 meters, max height 2m -->
+    <hfield name="riverbed" nrow="64" ncol="64" size="32 32 2 0"/>
+    
+    <!-- Material for terrain -->
+    <material name="ground_mat" rgba="0.6 0.5 0.4 1" specular="0.2"/>
+  </asset>
+  
+  <worldbody>
+    <!-- Light -->
+    <light pos="0 0 20" dir="0 0 -1" directional="true"/>
+    
+    <!-- Terrain geom using the heightfield -->
+    <geom name="ground" type="hfield" hfield="riverbed" material="ground_mat" 
+          friction="1.5 0.8 0.5"/>
+    
+    <!-- A simple floating sphere to give scale and reference (optional) -->
+    <body name="marker" pos="5 5 2">
+      <geom name="sphere" type="sphere" size="0.2" rgba="1 0 0 1"/>
+    </body>
+  </worldbody>
+</mujoco>

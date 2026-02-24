@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  pathway:
+    build:
+      context: .
+      dockerfile: Dockerfile.pathway
+    container_name: gangamitra-pathway
+    ports:
+      - "5556:5556"  # Map container's 5556 to host's 5556 (for simulator)
+      - "5557:5557"  # Map container's 5557 to host's 5557 (for dashboard)
+    environment:
+      - GENERATOR_HOST=host.docker.internal
+      - GENERATOR_PORT=5555
+      - OUTPUT_PORT=5556
+      - DASHBOARD_PORT=5557
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Important for Windows
+    restart: unless-stopped
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
