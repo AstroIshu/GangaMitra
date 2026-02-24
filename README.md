@@ -79,6 +79,7 @@ The system uses **ZeroMQ** for high-performance inter-process communication and 
 - **Debris Placement**: Random debris items (bottles, idols, cloth, metal) with physics properties
 - **Flow Field Generation**: 2D velocity field for water flow simulation
 - **ZeroMQ Publishing**: Streams data at 2 FPS on port 5555
+<img width="807" height="693" alt="Screenshot 2026-02-23 115049" src="https://github.com/user-attachments/assets/4b11da30-1716-4f61-bb2b-3f669e2ea160" />
 
 **Key Parameters**:
 ```python
@@ -125,6 +126,8 @@ PUB_FREQ = 2           # 2 frames per second
   - Port 5556: Full data for simulators
   - Port 5557: Metrics for dashboard
 - **Docker Support**: Runs in container with host network access
+
+<img width="1919" height="1199" alt="Screenshot 2026-02-23 144724" src="https://github.com/user-attachments/assets/67bb0239-4f5d-4266-b59d-9f64dc1cff0e" />
 
 **Environment Variables**:
 ```bash
@@ -174,6 +177,10 @@ DASHBOARD_PORT=5557                  # Dashboard output
 - PyBullet GUI provides interactive camera control
 - Physics simulation runs automatically
 - Terrain updates in real-time from Pathway pipeline
+
+
+https://github.com/user-attachments/assets/58a15913-3eba-478c-99f3-eedb483aaee4
+
 
 ---
 
@@ -232,6 +239,10 @@ DASHBOARD_PORT=5557                  # Dashboard output
    - Traversability statistics
 
 **Update Rate**: 10 FPS (100ms animation interval)
+
+
+https://github.com/user-attachments/assets/52453bae-d01f-4ecf-a4ae-1ce926cec2b4
+
 
 ---
 
@@ -387,6 +398,7 @@ docker-compose up
 2. Connects to generator on Windows host via `host.docker.internal`
 3. Binds ports 5556 and 5557 for output
 4. Processes terrain data continuously
+<img width="1819" height="1199" alt="Screenshot 2026-02-24 101658" src="https://github.com/user-attachments/assets/004496b1-b4f6-4966-ac2e-495d355b0873" />
 
 ### Configuration Files
 
@@ -453,6 +465,7 @@ generator.py (5555) → pathway_pipeline.py
     pybullet_  visualizer subscriber
     hexapod.py    .py        .py
 ```
+<img width="1919" height="1199" alt="Screenshot 2026-02-24 101108" src="https://github.com/user-attachments/assets/ac03a8ea-bc5f-4e52-a970-fdd8c75df254" />
 
 ---
 
