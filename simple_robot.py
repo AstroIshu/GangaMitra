@@ -7,7 +7,7 @@ class SimpleRobot:
     def __init__(self, start_pos=[16, 16, 1.0]):
         self.start_pos = list(start_pos)
         self.robot_id = None
-        self.speed = 8.0
+        self.speed = 6.0
         self.turn_speed = 4.0
 
         # For keyboard control

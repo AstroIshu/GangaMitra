@@ -7,8 +7,9 @@ from noise import pnoise2
 # Configuration
 GRID_SIZE = 64
 CELL_SIZE = 0.5
-PUB_FREQ = 0.5
+PUB_FREQ = 0.25          # Publish every 4 seconds (slower = more stable)
 ZMQ_PORT = 5555
+TERRAIN_BLEND = 0.15     # How much each new frame differs from the last (0-1)
 
 def carve_river_channel(heightmap):
     rows, cols = heightmap.shape
@@ -113,31 +114,48 @@ def main():
     socket = context.socket(zmq.PUB)
     socket.bind(f"tcp://*:{ZMQ_PORT}")
     print(f"Generator started, publishing on port {ZMQ_PORT}")
+    print(f"  Publish interval: {1.0/PUB_FREQ:.1f}s, blend factor: {TERRAIN_BLEND}")
 
     seq = 0
+
+    # --- persistent base terrain (smoothly evolving) ---
+    prev_heightmap = None
+    prev_silt = None
+    prev_flow_u = None
+    prev_flow_v = None
+
     while True:
         heightmap, silt, debris, flow_u, flow_v = generate_terrain_frame()
-        
+
+        # ---- smooth blending with previous frame ----
+        if prev_heightmap is not None:
+            alpha = TERRAIN_BLEND  # fraction of new data mixed in
+            heightmap = prev_heightmap * (1 - alpha) + heightmap * alpha
+            silt      = prev_silt      * (1 - alpha) + silt      * alpha
+            flow_u    = prev_flow_u    * (1 - alpha) + flow_u    * alpha
+            flow_v    = prev_flow_v    * (1 - alpha) + flow_v    * alpha
+
+        prev_heightmap = heightmap.copy()
+        prev_silt = silt.copy()
+        prev_flow_u = flow_u.copy()
+        prev_flow_v = flow_v.copy()
+
         msg = {
-    "timestamp": time.time(),
-    "sequence_id": seq,
-    "terrain": {
-        "heightmap": heightmap.flatten().tolist(),
-        "silt_depth": silt.flatten().tolist(),
-        "flow_u": flow_u.flatten().tolist(),
-        "flow_v": flow_v.flatten().tolist()
-    },
-    "debris": debris,
-    "metadata": {
-        "grid_size": GRID_SIZE,
-        "cell_size": CELL_SIZE,
-        "season": np.random.choice(["dry", "monsoon"])
-    }
-}
-        print("Message keys:", msg.keys())
-        if 'terrain' in msg:
-            print("Terrain keys:", msg['terrain'].keys())
-        print("Debris count:", len(msg['debris']))
+            "timestamp": time.time(),
+            "sequence_id": seq,
+            "terrain": {
+                "heightmap": heightmap.flatten().tolist(),
+                "silt_depth": silt.flatten().tolist(),
+                "flow_u": flow_u.flatten().tolist(),
+                "flow_v": flow_v.flatten().tolist()
+            },
+            "debris": debris,
+            "metadata": {
+                "grid_size": GRID_SIZE,
+                "cell_size": CELL_SIZE,
+                "season": np.random.choice(["dry", "monsoon"])
+            }
+        }
 
         socket.send_json(msg)
         print(f"Sent frame {seq} with {len(debris)} debris items")
