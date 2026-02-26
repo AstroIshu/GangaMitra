@@ -18,6 +18,9 @@
 
 ---
 
+https://github.com/user-attachments/assets/dbaa63e3-28a0-4694-8922-d880d32d7991
+
+
 ## 🎯 Overview
 
 GangaMitra is a comprehensive simulation pipeline that:
