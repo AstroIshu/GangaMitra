@@ -7,7 +7,7 @@ from noise import pnoise2
 # Configuration
 GRID_SIZE = 64
 CELL_SIZE = 0.5
-PUB_FREQ = 2
+PUB_FREQ = 0.5
 ZMQ_PORT = 5555
 
 def carve_river_channel(heightmap):
