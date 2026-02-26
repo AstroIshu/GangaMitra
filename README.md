@@ -10,6 +10,10 @@
 
 **GangaMitra** is a comprehensive real-time river terrain simulation system designed for aquatic debris collection and navigation analysis. The project simulates dynamic river environments with realistic terrain features, silt deposits, debris distribution, and flow fields, while providing a physics-based 3D visualization and real-time traversability analysis.
 
+
+https://github.com/user-attachments/assets/7d97586a-574d-4e04-aac6-28488d4fdef7
+
+
 ---
 
 ## ⚡ Quick Start
@@ -658,6 +662,7 @@ environment:
 3. **Plotly** (Web Interactive - unused in final):
    - Experimented but removed for simplicity
    - Could be reintegrated for web-based control
+<img width="1919" height="1199" alt="Screenshot 2026-02-26 080925" src="https://github.com/user-attachments/assets/7bf0c592-ea77-4525-a285-81d339a7add4" />
 
 **Design Pattern**: Observer pattern via pub-sub allows adding visualizers without modifying producers.
 
@@ -1017,6 +1022,7 @@ terrain_shape = p.createCollisionShape(
 
 **Lesson**: 
 > *"The simple test became the foundation for the final system. Start simple, iterate fast."*
+<img width="1088" height="983" alt="Screenshot 2026-02-26 061449" src="https://github.com/user-attachments/assets/636e590e-c1b7-4d67-a19a-0d294697309e" />
 
 ---
 
