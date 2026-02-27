@@ -359,7 +359,7 @@ https://github.com/user-attachments/assets/52453bae-d01f-4ecf-a4ae-1ce926cec2b4
 **Purpose**: Simple terminal-based data stream monitor.
 
 **Output**:
-```
+
 Seq 142, time 1234.567
   heightmap shape: 4096 values
   silt_depth shape: 4096 values
