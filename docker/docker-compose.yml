@@ -3,8 +3,8 @@ version: '3.8'
 services:
   pathway:
     build:
-      context: .
-      dockerfile: Dockerfile.pathway
+      context: ..
+      dockerfile: docker/Dockerfile.pathway
     container_name: gangamitra-pathway
     ports:
       - "5556:5556"  # Map container's 5556 to host's 5556 (for simulator)

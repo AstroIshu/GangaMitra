@@ -9,14 +9,16 @@ from PIL import Image
 import io
 import os
 import tempfile
+from scipy.ndimage import gaussian_filter
 
 class EnhancedTerrain:
-    def __init__(self, grid_size=64, cell_size=0.5, terrain_height_scale=2.0):
+    def __init__(self, grid_size=128, cell_size=0.25, terrain_height_scale=2.0):
         self.grid_size = grid_size
         self.cell_size = cell_size
         self.terrain_height_scale = terrain_height_scale
         self.terrain_size = grid_size * cell_size
         self._tex_counter = 0  # Unique counter for texture filenames
+        self.smoothing_sigma = 1.5  # Gaussian smoothing factor for smooth appearance
         
         # Terrain textures
         self.terrain_texture_id = None
@@ -131,8 +133,8 @@ class EnhancedTerrain:
     
     def create_water_effect(self):
         """Create a water surface layer — a grid of tiles that follow terrain height."""
-        # Water surface resolution — match terrain grid for tight fit
-        self.water_res = 32  # 32x32 = 1024 smaller tiles
+        # Water surface resolution — scale with terrain grid for consistency
+        self.water_res = 64  # 64x64 = 4096 tiles for high detail
         self.water_tile_size = self.terrain_size / self.water_res
         self.water_bodies = []
         self.water_level = 0.8
@@ -264,8 +266,11 @@ class EnhancedTerrain:
     def update_terrain(self, heightmap, silt_depth=None, traversability=None):
         """Update terrain with new data and adjust colors based on silt/traversability"""
         
+        # Apply Gaussian smoothing for smooth appearance
+        heightmap_smooth = gaussian_filter(heightmap, sigma=self.smoothing_sigma)
+        
         # Normalize heights for PyBullet
-        heightmap_flat = heightmap.flatten().astype(np.float32)
+        heightmap_flat = heightmap_smooth.flatten().astype(np.float32)
         normalized_heights = heightmap_flat / self.terrain_height_scale
         
         # Rebuild the collision/visual shape with new height data
@@ -287,11 +292,11 @@ class EnhancedTerrain:
         )
         
         # Always generate a dynamic color texture from the current data
-        self._update_terrain_color_texture(heightmap, silt_depth, traversability)
+        self._update_terrain_color_texture(heightmap_smooth, silt_depth, traversability)
         
         # Update rock positions to sit on terrain (world-space z)
-        h_min = heightmap.min()
-        h_max = heightmap.max()
+        h_min = heightmap_smooth.min()
+        h_max = heightmap_smooth.max()
         mid_h = (h_min + h_max) / 2.0
         for rock in self.rocks:
             pos, _ = p.getBasePositionAndOrientation(rock)
@@ -299,10 +304,7 @@ class EnhancedTerrain:
             ix = int(x / self.cell_size)
             iy = int(y / self.cell_size)
             if 0 <= ix < self.grid_size and 0 <= iy < self.grid_size:
-                h = heightmap[iy, ix] - mid_h
-                p.resetBasePositionAndOrientation(rock, [x, y, h + 0.3], [0, 0, 0, 1])
-    
-    def _update_terrain_color_texture(self, heightmap, silt_depth, traversability):
+                    h = heightmap_smooth[iy, ix] - mid_h
         """Generate a color texture that smoothly reflects current terrain data."""
         gs = self.grid_size  # 64
         
@@ -384,8 +386,9 @@ class EnhancedTerrain:
         # Assemble texture
         texture = np.stack([r, g, b], axis=-1).astype(np.uint8)
         
-        # Upscale to 128x128
-        texture_up = np.repeat(np.repeat(texture, 2, axis=0), 2, axis=1)
+        # Upscale texture to match higher resolution (256x256 for 128 grid, 512x512 for smoother look)
+        scale_factor = max(2, 512 // gs)
+        texture_up = np.repeat(np.repeat(texture, scale_factor, axis=0), scale_factor, axis=1)
         
         img = Image.fromarray(texture_up)
         # Use unique filename each frame to defeat PyBullet's texture cache
@@ -405,7 +408,7 @@ class EnhancedTerrain:
         p.changeVisualShape(self.terrain_id, -1, textureUniqueId=tex_id)
 
 class EnhancedTerrainViewer:
-    def __init__(self, grid_size=64, cell_size=0.5, terrain_height_scale=2.0):
+    def __init__(self, grid_size=128, cell_size=0.25, terrain_height_scale=2.0):
         self.grid_size = grid_size
         self.cell_size = cell_size
         self.terrain_height_scale = terrain_height_scale

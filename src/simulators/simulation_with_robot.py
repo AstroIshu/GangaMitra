@@ -8,8 +8,14 @@ import cv2
 from PIL import Image
 import io
 import os
+import sys
 import tempfile
-from simple_robot import SimpleRobot
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'robots'))
+
+from src.robots.simple_robot import SimpleRobot
 
 class RobotSimulation:
     def __init__(self, grid_size=64, cell_size=0.5, terrain_height_scale=2.0):
@@ -22,7 +28,7 @@ class RobotSimulation:
         self.setup_pybullet()
         
         # Create enhanced terrain (using your existing class)
-        from pybullet_terrain import EnhancedTerrain
+        from src.simulators.pybullet_terrain import EnhancedTerrain
         self.terrain = EnhancedTerrain(grid_size, cell_size, terrain_height_scale)
         
         # Initialize terrain data arrays (will be updated via ZMQ later)

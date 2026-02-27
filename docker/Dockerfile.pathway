@@ -8,13 +8,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements_pathway.txt .
+COPY requirements/requirements_pathway.txt .
 
 # Install Pathway and other Python dependencies
 RUN pip install --no-cache-dir -r requirements_pathway.txt
 
+# Copy source code
+COPY src/ ./src/
+
 # Copy your Pathway pipeline script
-COPY pathway_pipeline.py .
+COPY src/pipeline/pathway_pipeline.py .
 
 # Command to run the pipeline
 CMD ["python", "pathway_pipeline.py"]

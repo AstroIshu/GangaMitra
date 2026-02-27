@@ -3,16 +3,12 @@ import pybullet as p
 import numpy as np
 import math
 
-
 class SimpleRobot:
-    def __init__(self, start_pos=[16, 16, 2.0]):
+    def __init__(self, start_pos=[16, 16, 1.0]):
         self.start_pos = list(start_pos)
         self.robot_id = None
-
-        # Drive parameters (wheel angular-velocity units)
-        self.speed = 10.0          # wheel target ω for full-forward
-        self.turn_speed = 6.0      # differential ω added for turning
-        self.drive_force = 15.0    # max motor torque per wheel
+        self.speed = 6.0
+        self.turn_speed = 4.0
 
         # For keyboard control
         self.forward = 0
@@ -22,27 +18,18 @@ class SimpleRobot:
         self.collision_debris = set()
         self.collected_debris = []
 
-        # -----------------------------------------------------------
-        # Robot dimensions — designed for rough heightfield terrain
-        # -----------------------------------------------------------
-        #  • large wheels → good ground clearance (body clears bumps)
-        #  • wide wheelbase → resist tipping
-        #  • 6 wheels → stable on uneven ground
-        self.length = 1.6
+        # Robot dimensions
+        self.length = 1.0
         self.width = 0.8
-        self.height = 0.25          # thin body slab
-        self.wheel_radius = 0.35    # big wheels
-        self.wheel_width = 0.12
-        self.num_wheels = 6
-
-        # Ground clearance when resting on wheels:
-        #   body_bottom = wheel_radius  (= 0.35 m above ground)
-        #   body_top    = wheel_radius + height (= 0.60 m)
+        self.height = 0.4
+        self.wheel_radius = 0.25
+        self.wheel_width = 0.15
+        self.num_wheels = 4
 
         self.create_robot()
 
     def create_robot(self):
-        """Create a 6-wheeled robot driven via joint motors."""
+        """Create a box robot with 4 wheels attached as child links."""
 
         # --- shapes -------------------------------------------------
         body_col = p.createCollisionShape(
@@ -65,29 +52,27 @@ class SimpleRobot:
             rgbaColor=[0.3, 0.3, 0.3, 1.0],
         )
 
-        # --- wheel positions in body frame --------------------------
-        wx = self.length * 0.38           # front/rear offset
-        wy = self.width / 2 + self.wheel_width / 2 + 0.02  # just outside body
-        wz = -self.height / 2             # bottom edge of body
+        # --- wheel link parameters ----------------------------------
+        wx = self.length * 0.35
+        wy = self.width / 2 + self.wheel_width / 2
+        wz = -self.height / 2          # bottom edge of body
 
         wheel_positions = [
-            [ wx, -wy, wz],               # front-left
-            [ wx,  wy, wz],               # front-right
-            [  0, -wy, wz],               # mid-left
-            [  0,  wy, wz],               # mid-right
-            [-wx, -wy, wz],               # rear-left
-            [-wx,  wy, wz],               # rear-right
+            [ wx, -wy, wz],             # front-left
+            [ wx,  wy, wz],             # front-right
+            [-wx, -wy, wz],             # rear-left
+            [-wx,  wy, wz],             # rear-right
         ]
 
-        # Rotate cylinder so its long axis points sideways (along Y)
+        # Rotate cylinder so its axis (Z) points along parent Y (sideways)
         wheel_orn = p.getQuaternionFromEuler([math.pi / 2, 0, 0])
 
         self.robot_id = p.createMultiBody(
-            baseMass=10.0,
+            baseMass=5.0,
             baseCollisionShapeIndex=body_col,
             baseVisualShapeIndex=body_vis,
             basePosition=self.start_pos,
-            linkMasses=[0.8] * self.num_wheels,
+            linkMasses=[0.5] * self.num_wheels,
             linkCollisionShapeIndices=[wheel_col] * self.num_wheels,
             linkVisualShapeIndices=[wheel_vis] * self.num_wheels,
             linkPositions=wheel_positions,
@@ -96,30 +81,24 @@ class SimpleRobot:
             linkInertialFrameOrientations=[[0, 0, 0, 1]] * self.num_wheels,
             linkParentIndices=[0] * self.num_wheels,
             linkJointTypes=[p.JOINT_REVOLUTE] * self.num_wheels,
-            linkJointAxis=[[0, 0, 1]] * self.num_wheels,   # child-frame Z = cylinder axis
+            linkJointAxis=[[0, 0, 1]] * self.num_wheels,
         )
 
         # --- dynamics ------------------------------------------------
-        # Body: moderate friction, heavy damping to resist jitter
         p.changeDynamics(
             self.robot_id, -1,
-            lateralFriction=0.3,
-            angularDamping=5.0,
-            linearDamping=0.3,
-            restitution=0.0,
+            lateralFriction=0.5,
+            angularDamping=0.9,
+            linearDamping=0.1,
         )
-        # Wheels: high friction for grip, zero bounce
         for i in range(self.num_wheels):
             p.changeDynamics(
                 self.robot_id, i,
-                lateralFriction=1.2,
-                spinningFriction=0.4,
-                rollingFriction=0.05,
-                restitution=0.0,
+                lateralFriction=1.5,
+                spinningFriction=0.3,
+                rollingFriction=0.01,
             )
-
-        # Disable default joint motors (we drive them explicitly)
-        for i in range(self.num_wheels):
+            # Let wheels spin freely
             p.setJointMotorControl2(
                 self.robot_id, i, p.VELOCITY_CONTROL,
                 targetVelocity=0, force=0,
@@ -128,28 +107,39 @@ class SimpleRobot:
         print(f"Robot created at position {self.start_pos}")
 
     # -----------------------------------------------------------------
-    # Control  (wheel-driven — no resetBaseVelocity)
+    # Control
     # -----------------------------------------------------------------
     def apply_control(self, forward_cmd, turn_cmd):
-        """Drive the robot through wheel motors.
+        """Apply force-based control for smooth, non-jittery movement."""
+        pos, orn = p.getBasePositionAndOrientation(self.robot_id)
+        yaw = p.getEulerFromQuaternion(orn)[2]
+        current_lin, current_ang = p.getBaseVelocity(self.robot_id)
 
-        forward_cmd : -1 .. +1   (backward .. forward)
-        turn_cmd    : -1 .. +1   (right .. left)
-        """
-        base_speed = forward_cmd * self.speed
-        diff = turn_cmd * self.turn_speed
+        # --- linear velocity (smooth blend) --------------------------
+        target_vx = math.cos(yaw) * forward_cmd * self.speed
+        target_vy = math.sin(yaw) * forward_cmd * self.speed
 
-        # Differential steering: left wheels / right wheels
-        left_vel  = base_speed + diff
-        right_vel = base_speed - diff
+        # Lerp towards target (higher = more responsive)
+        blend = 0.4
+        new_vx = current_lin[0] + (target_vx - current_lin[0]) * blend
+        new_vy = current_lin[1] + (target_vy - current_lin[1]) * blend
 
-        # Indices: 0,2,4 = left wheels;  1,3,5 = right wheels
+        # --- angular velocity (smooth blend) -------------------------
+        target_wz = turn_cmd * self.turn_speed
+        new_wz = current_ang[2] + (target_wz - current_ang[2]) * blend
+
+        p.resetBaseVelocity(
+            self.robot_id,
+            linearVelocity=[new_vx, new_vy, current_lin[2]],
+            angularVelocity=[0, 0, new_wz],
+        )
+
+        # Spin wheel visuals
+        wheel_spin = forward_cmd * self.speed / self.wheel_radius
         for i in range(self.num_wheels):
-            vel = left_vel if (i % 2 == 0) else right_vel
             p.setJointMotorControl2(
                 self.robot_id, i, p.VELOCITY_CONTROL,
-                targetVelocity=vel,
-                force=self.drive_force,
+                targetVelocity=wheel_spin, force=2,
             )
 
     def set_movement(self, speed, steering):
@@ -177,12 +167,13 @@ class SimpleRobot:
     # Per-frame update
     # -----------------------------------------------------------------
     def update(self):
-        """Call once per frame — keep robot upright, clear collision set."""
+        """Call once per frame – gently keeps robot upright & clears collision set."""
         pos, orn = p.getBasePositionAndOrientation(self.robot_id)
         roll, pitch, yaw = p.getEulerFromQuaternion(orn)
 
-        # If the robot has flipped or tilted badly, gently correct
-        if abs(roll) > 0.45 or abs(pitch) > 0.45:
+        # Only correct if tilt is significant (> ~17 degrees)
+        # Use a torque-based correction instead of hard reset to avoid jitter
+        if abs(roll) > 0.3 or abs(pitch) > 0.3:
             corrected = p.getQuaternionFromEuler([0, 0, yaw])
             lin_vel, ang_vel = p.getBaseVelocity(self.robot_id)
             p.resetBasePositionAndOrientation(self.robot_id, pos, corrected)
