@@ -7,8 +7,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # Import and run
-from core.generator import *
+from core.generator import main
 
 if __name__ == "__main__":
-    # The generator.py has its main code at module level, so importing runs it
-    pass
+    main()

@@ -304,7 +304,10 @@ class EnhancedTerrain:
             ix = int(x / self.cell_size)
             iy = int(y / self.cell_size)
             if 0 <= ix < self.grid_size and 0 <= iy < self.grid_size:
-                    h = heightmap_smooth[iy, ix] - mid_h
+                h = heightmap_smooth[iy, ix] - mid_h
+                p.resetBasePositionAndOrientation(rock, [x, y, h * self.terrain_height_scale + 0.2], [0, 0, 0, 1])
+    
+    def _update_terrain_color_texture(self, heightmap, silt_depth=None, traversability=None):
         """Generate a color texture that smoothly reflects current terrain data."""
         gs = self.grid_size  # 64
         
