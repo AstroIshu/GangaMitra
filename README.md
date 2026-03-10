@@ -131,7 +131,7 @@ Complete system integration:
 
 ---
 
-## �🏗️ Architecture
+## 🏗️ Architecture
 
 ```
 ┌─────────────────┐         
@@ -285,7 +285,7 @@ terrain_shape = p.createCollisionShape(
 socket.RCVTIMEO = 100  # 100ms timeout
 while True:
     msg
-
+```
 ---
 
 ### 5. **dashboard.py** - Performance Monitoring
@@ -293,23 +293,26 @@ while True:
 **Purpose**: Real-time visualization of system metrics and terrain analysis.
 
 **Dashboard Layout** (16×12 window):
+```mermaid
+graph TD
+    subgraph Dashboard["16×12 Window"]
+        subgraph Row0["Row 0"]
+            A[Heightmap] -->|50%| B[Silt Depth]
+        end
+        subgraph Row1["Row 1"]
+            C[Traversability] -->|50%| D[Debris Distribution]
+        end
+        subgraph Row2["Row 2 (Performance)"]
+            E[Latency] -->|50%| F[Throughput]
+            G[Debris Count] -->|50%| H[Avg Traversability]
+        end
+        subgraph Row3["Row 3"]
+            I[Statistics Text Box]
+        end
+    end
 
 ```
-┌─────────────────┬─────────────────┐
-│   Heightmap     │   Silt Depth    │  Row 0
-├─────────────────┼─────────────────┤
-│  Traversability │ Debris Distrib. │  Row 1
-├─────────────────┴─────────────────┤
-│  ┌───────────┬───────────┐        │
-│  │ Latency   │ Throughput│        │  Row 2
-│  ├───────────┼───────────┤        │  (Performance)
-│  │Debris Cnt │ Avg Trav. │        │
-│  └───────────┴───────────┘        │
-├────────────────────────────────────┤
-│       Statistics Text Box          │  Row 3
-└────────────────────────────────────┘
-```
-
+---
 **Metrics Displayed**:
 1. **Terrain Visualizations**:
    - Heightmap (terrain colormap, 0-2m)
@@ -359,7 +362,7 @@ https://github.com/user-attachments/assets/52453bae-d01f-4ecf-a4ae-1ce926cec2b4
 **Purpose**: Simple terminal-based data stream monitor.
 
 **Output**:
-```
+
 Seq 142, time 1234.567
   heightmap shape: 4096 values
   silt_depth shape: 4096 values
